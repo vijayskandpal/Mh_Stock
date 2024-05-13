@@ -1,29 +1,40 @@
 """Module providing a function printing python version."""
-
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import streamlit as st
 
+# Define the scopes for Google Sheets API
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-creds = Credentials.from_service_account_file(
-    "credentials.json", scopes=scopes)
-client = gspread.authorize(creds)
+
+# Load service account key from Streamlit secrets
+skey = st.secrets["gcp_service_account"]
+
+# Create credentials object from the service account key
+credentials = Credentials.from_service_account_info(skey, scopes=scopes)
+
+# Authorize the client using the credentials
+client = gspread.authorize(credentials)
 
 sheet_id = "1uG-cGTqzzofZCNTLh1sb3tE4GaaofQK-JA2EtucVsEo"
 workbook = client.open_by_key(sheet_id)
 
 # Fetch data from DATA worksheet
 dfSheetData = workbook.worksheet("DATA")
-dataFrame = pd.DataFrame(dfSheetData.get_all_records(expected_headers=["IN/OUT", "ITEM_CODE",
-                                                                       "IN/OUT QTY", "BILL_INVNO_FAULTY_SAMPLE", "BILL_DATE",
-                                                                       "MTRL_INOUT_DATE", "NAME_CLIENT", "REMARKS", "CLOSING_STOCK", "ITEM_NAME"]))
+
+dataFrame = pd.DataFrame(dfSheetData.get_all_records(
+    expected_headers=["IN/OUT", "ITEM_CODE",
+                      "IN/OUT QTY", "BILL_INVNO_FAULTY_SAMPLE", "BILL_DATE",
+                      "MTRL_INOUT_DATE", "NAME_CLIENT", "REMARKS",
+                      "CLOSING_STOCK", "ITEM_NAME"]))
+
 
 # Fetch data from Item_List worksheet
 dfSheetItem_List = workbook.worksheet("Item_List")
-dataItem_List = pd.DataFrame(dfSheetItem_List.get_all_records(expected_headers=["Net", "Item_Code", "Model No", "Particulars",
-                                                                                "BRAND", "Category", "Box Location", "Physical Date",
-                                                                                "MIN QTY", "MAX QTY"]))
+dataItem_List = pd.DataFrame(dfSheetItem_List.get_all_records(
+    expected_headers=["Net", "Item_Code", "Model No", "Particulars",
+                      "BRAND", "Category", "Box Location", "Physical Date",
+                      "MIN QTY", "MAX QTY"]))
 dataItem_List = dataItem_List.loc[:, ["Net", "Item_Code", "Model No", "Particulars",
                                       "BRAND", "Category", "MIN QTY", "MAX QTY"]]
 
@@ -57,3 +68,4 @@ with tab1:
     st.table(closing_stock)
 with tab2:
     st.write('hello')
+
