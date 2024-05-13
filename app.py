@@ -20,11 +20,15 @@ sheet_id = "1uG-cGTqzzofZCNTLh1sb3tE4GaaofQK-JA2EtucVsEo"
 workbook = client.open_by_key(sheet_id)
 
 # Cache data loading functions
+
+
 @st.cache_data
 def load_data_from_worksheet(worksheet_name, expected_headers):
     worksheet = workbook.worksheet(worksheet_name)
-    data = pd.DataFrame(worksheet.get_all_records(expected_headers=expected_headers))
+    data = pd.DataFrame(worksheet.get_all_records(
+        expected_headers=expected_headers))
     return data
+
 
 # Load data from DATA worksheet
 dataFrame = load_data_from_worksheet("DATA", ["IN/OUT", "ITEM_CODE", "IN/OUT QTY", "BILL_INVNO_FAULTY_SAMPLE",
@@ -33,8 +37,8 @@ dataFrame = load_data_from_worksheet("DATA", ["IN/OUT", "ITEM_CODE", "IN/OUT QTY
 
 # Load data from Item_List worksheet
 dataItem_List = load_data_from_worksheet("Item_List", ["Net", "Item_Code", "Model No", "Particulars",
-                                                        "BRAND", "Category", "Box Location", "Physical Date",
-                                                        "MIN QTY", "MAX QTY"])
+                                                       "BRAND", "Category", "Box Location", "Physical Date",
+                                                       "MIN QTY", "MAX QTY"])
 dataItem_List = dataItem_List.loc[:, ["Net", "Item_Code", "Model No", "Particulars",
                                       "BRAND", "Category", "MIN QTY", "MAX QTY"]]
 
@@ -58,6 +62,10 @@ with tab1:
     st.table(closing_stock)
 
 with tab2:
-    st.write('hello')
+    st.write('Items with Closing Stock > Max Quantity')
+    filtered_data = dataItem_List[(dataItem_List['Net'] > dataItem_List['MAX QTY']) & (
+        dataItem_List['MAX QTY'] != 0)].reset_index(drop=True)
+    st.dataframe(filtered_data)
+
 
 
