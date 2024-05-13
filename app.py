@@ -19,37 +19,27 @@ client = gspread.authorize(credentials)
 sheet_id = "1uG-cGTqzzofZCNTLh1sb3tE4GaaofQK-JA2EtucVsEo"
 workbook = client.open_by_key(sheet_id)
 
-# Fetch data from DATA worksheet
-dfSheetData = workbook.worksheet("DATA")
+# Cache data loading functions
+@st.cache_data
+def load_data_from_worksheet(worksheet_name, expected_headers):
+    worksheet = workbook.worksheet(worksheet_name)
+    data = pd.DataFrame(worksheet.get_all_records(expected_headers=expected_headers))
+    return data
 
-dataFrame = pd.DataFrame(dfSheetData.get_all_records(
-    expected_headers=["IN/OUT", "ITEM_CODE",
-                      "IN/OUT QTY", "BILL_INVNO_FAULTY_SAMPLE", "BILL_DATE",
-                      "MTRL_INOUT_DATE", "NAME_CLIENT", "REMARKS",
-                      "CLOSING_STOCK", "ITEM_NAME"]))
+# Load data from DATA worksheet
+dataFrame = load_data_from_worksheet("DATA", ["IN/OUT", "ITEM_CODE", "IN/OUT QTY", "BILL_INVNO_FAULTY_SAMPLE",
+                                              "BILL_DATE", "MTRL_INOUT_DATE", "NAME_CLIENT", "REMARKS",
+                                              "CLOSING_STOCK", "ITEM_NAME"])
 
-
-# Fetch data from Item_List worksheet
-dfSheetItem_List = workbook.worksheet("Item_List")
-dataItem_List = pd.DataFrame(dfSheetItem_List.get_all_records(
-    expected_headers=["Net", "Item_Code", "Model No", "Particulars",
-                      "BRAND", "Category", "Box Location", "Physical Date",
-                      "MIN QTY", "MAX QTY"]))
+# Load data from Item_List worksheet
+dataItem_List = load_data_from_worksheet("Item_List", ["Net", "Item_Code", "Model No", "Particulars",
+                                                        "BRAND", "Category", "Box Location", "Physical Date",
+                                                        "MIN QTY", "MAX QTY"])
 dataItem_List = dataItem_List.loc[:, ["Net", "Item_Code", "Model No", "Particulars",
                                       "BRAND", "Category", "MIN QTY", "MAX QTY"]]
 
-
-# stremlit tab option active
+# Streamlit tab option active
 tab1, tab2 = st.tabs(["Closing Stock", "Item_List"])
-
-
-dataFrame = dataFrame.iloc[:, range(0, 10)]
-# Assuming df is your DataFrame containing the data
-dataFrame['BILL_DATE'] = pd.to_datetime(
-    dataFrame['BILL_DATE'], format='%d-%b-%y')
-dataFrame['MTRL_INOUT_DATE'] = pd.to_datetime(
-    dataFrame['MTRL_INOUT_DATE'], format='%d-%b-%y')
-
 
 # Closing Stock
 with tab1:
@@ -66,6 +56,8 @@ with tab1:
         [closing_stock, grand_total_row], ignore_index=True)
     st.metric(label="Closing Stock", value=closing_stock_Total)
     st.table(closing_stock)
+
 with tab2:
     st.write('hello')
+
 
